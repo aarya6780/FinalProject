@@ -55,11 +55,11 @@ def corrector(my_text):
 
 #loading trained MLP model. The following function is used to get symptoms as input and predict the result
 mlp = pickle.load(open('finalized_model.sav', 'rb'))
-vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
+# vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
+vectorizer = pickle.load(open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
 session = []
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    print("test----")
     if request.method =='GET':
         return render_template('login.html')
     if request.method == 'POST':
@@ -74,7 +74,7 @@ def login():
         
         print(userLists)
         if userLists:
-            response = make_response(redirect(url_for('index_home')))
+            response = make_response(redirect(url_for('home')))
             response.set_cookie('login_secretkey',value=userLists[0].get('login_secretkey'))
             session.append(userLists[0].get('login_secretkey'))
             return response
@@ -85,8 +85,6 @@ def login():
 
 @app.route('/case',methods=['GET','POST'])
 def testCase():
-    print("test print routeeeee")
-    print('----------------------------------------')
     if request.cookies.get('login_secretkey') not in session:
         return redirect('/')    
     if request.method == 'POST':
@@ -99,7 +97,6 @@ def testCase():
         feedbacks = request.form.get('feedbacks')
         is_recommendable = "no"
 
-        print("inxidedsaddsurvey----",fname,lname,ratings,radio_yes,radio_no,feedbacks)
         if radio_yes == "1":
             is_recommendable = "yes"
 
@@ -115,17 +112,32 @@ def testCase():
 
       # Get the user's information from the form
         val = LoginVO.query.filter_by(login_secretkey = request.cookies.get('login_secretkey'))
-        print("val----",val)
         test = [i.as_dict() for i in val]
-        print("testdasfasfasdfasfasf----",test)
 
         if test[0].get("login_username") :
             send_mail(test[0].get("login_username"))
     return redirect(url_for('index_home'))
 
+def send_mail(username):
+    sender = "doshiaarya007@gmail.com"
+    password = "gbfctpxwdwhhfqfc"
+    receiver = username
+    msg = MIMEMultipart()
+    msg['From'] = sender
+    msg['To'] = receiver
+    msg['Subject'] = "Survey Completed"
+    body = "Dear Sir/Ma'am,\n We have received your reviews on our app.\n We will closely look into it and do the neccessary changes to make your experience even better.\n Best Regards, \n Team 14"
+    msg.attach(MIMEText(body, 'plain'))
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(sender, password)
+    text = msg.as_string()
+    server.sendmail(sender, receiver, text)
+    server.quit()
+
+
 @app.route('/index_home', methods=['GET', 'POST'])
 def index_home():
-    print("indesx hoome [paaf]")
     if request.method == 'POST':      #name = request.form['name']
       text = request.form['text']    
       X_test = vectorizer.fit_transform([text]) 
@@ -157,7 +169,6 @@ def submit_form():
     answer = mlp.predict(X_test)
     prediction = answer[0]
     prob = mlp.predict_proba(X_test)[0][1]*100
-    #print(y_pred)
     if prediction == 1.0:
         result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "% which is high."
         return render_template('index.html', test=result)
@@ -175,7 +186,6 @@ def logOff():
 
 @app.route('/registeruser',methods=['GET','POST'])
 def register():
-    print("refisterererer")
     if request.method == 'POST':
       # Get the user's information from the form
       fname = request.form.get('fname')
@@ -224,104 +234,4 @@ def home():
 
 app = Flask(__name__, static_url_path='/static')
 
-
-@app.route('/register', methods=['POST','GET'])
-def signup():
-   print('--------test ===============')
-   if request.method == 'POST':
-      # Get the user's information from the form
-      fname = request.form.get('fname')
-      lname = request.form.get('lname')
-      email = request.form.get('mail')
-      contact = request.form.get('contact')
-      password = request.form.get('psw')
-
-      LoginVO_obj = LoginVO()
-      LoginVO_obj.login_username = email
-      LoginVO_obj.login_password = password
-      LoginVO_obj.login_secretkey = "".join((random.choice(string.ascii_letters+string.digits)) for x in range(10))
-      db.session.add(LoginVO_obj)
-      db.session.commit()
-
-      UserVO_obj = UserVO()
-      UserVO_obj.user_firstname = fname
-      UserVO_obj.user_lastname = lname
-      UserVO_obj.user_email_id = email
-      UserVO_obj.user_contact = contact
-      UserVO_obj.user_login_id = LoginVO_obj.login_id
-      db.session.add(UserVO_obj)
-      db.session.commit()
-
-      # Redirect to the index page
-      return redirect(url_for('login'))
-   return render_template('sign-up.html')
-
-   
-   
-@app.route('/logout', methods=['GET'])
-def logout():
-    print("logout")
-    login_secretkey = request.cookies.get('login_secretkey')
-    response = make_response(redirect('/'))
-    response.set_cookie('login_secretkey', "", max_age=0)
-    session.clear()
-    return response
-
-
-@app.route('/survey_test', methods=['GET','POST'])
-def submitSurvey():
-    print('----------------------------------------')
-    if request.cookies.get('login_secretkey') not in session:
-        return redirect('/')    
-    if request.method == 'POST':
-
-        fname = request.form.get('First')
-        lname = request.form.get('Last')
-        ratings = request.form.get('ratings')
-        radio_yes = request.form.get('radio_yes')
-        radio_no = request.form.get('radio_no')
-        feedbacks = request.form.get('feedbacks')
-        is_recommendable = "no"
-
-        print("inxidedsaddsurvey----",fname,lname,ratings,radio_yes,radio_no,feedbacks)
-        if radio_yes == "1":
-            is_recommendable = "yes"
-
-        SurveyData_obj = surveyTable()
-        SurveyData_obj.firstname = fname
-        SurveyData_obj.lastname = lname
-        SurveyData_obj.ratings = ratings
-        SurveyData_obj.is_recommendable = is_recommendable
-        SurveyData_obj.feedbacks = feedbacks
-        db.session.add(SurveyData_obj)
-        db.session.commit()
-        
-
-      # Get the user's information from the form
-        val = LoginVO.query.filter_by(login_secretkey = request.cookies.get('login_secretkey'))
-        print("val----",val)
-        test = [i.as_dict() for i in val]
-        print("testdasfasfasdfasfasf----",test)
-
-        if test[0].get("login_username") :
-            send_mail(test[0].get("login_username"))
-    return redirect(url_for('index_home'))
-    
-
-def send_mail(username):
-    sender = "doshiaarya007@gmail.com"
-    password = "gbfctpxwdwhhfqfc"
-    receiver = "aaryadoshi2000@gmail.com"
-    msg = MIMEMultipart()
-    msg['From'] = sender
-    msg['To'] = receiver
-    msg['Subject'] = "Survey Completed"
-    body = "Dear Sir/Ma'am,\n We have received your reviews on our app.\n We will closely look into it and do the neccessary changes to make your experience even better.\n Best Regards, \n Team 14"
-    msg.attach(MIMEText(body, 'plain'))
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(sender, password)
-    text = msg.as_string()
-    server.sendmail(sender, receiver, text)
-    server.quit()
-
+ 
