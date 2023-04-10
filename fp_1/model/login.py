@@ -1,19 +1,19 @@
-from app2 import db
+from app import db
 
 
-class LoginVO(db.Model):
-    _tablename_ = 'login_users'
-    login_id = db.Column('login_id', db.Integer, primary_key=True, autoincrement=True)
-    login_username = db.Column('login_username', db.String(100), nullable=False)
-    login_password = db.Column('login_password', db.String(100), nullable=False)
-    login_secretkey = db.Column('login_secretkey', db.String(32), nullable=False)
+class loginTable(db.Model):
+    _tablename_ = 'login'
+    logged_id = db.Column('logged_id', db.Integer, primary_key=True, autoincrement=True)
+    logged_useremail = db.Column('logged_useremail', db.String(100), nullable=False)
+    logged_password = db.Column('logged_password', db.String(100), nullable=False)
+    logged_secret = db.Column('logged_secret', db.String(32), nullable=False)
 
     def as_dict(self):
         return {
-            'login_id': self.login_id,
-            'login_username': self.login_username,
-            'login_password': self.login_password,
-            'login_secretkey': self.login_secretkey
+            'logged_id': self.logged_id,
+            'logged_useremail': self.logged_useremail,
+            'logged_password': self.logged_password,
+            'logged_secret': self.logged_secret
         }
 
 

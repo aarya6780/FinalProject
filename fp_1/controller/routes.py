@@ -2,20 +2,22 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
-from app2 import app
+from app import app
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, make_response
 import io
 import os
 import pickle
-from app2 import db
+from app import db
 import random 
 import string
-from model.login import LoginVO
-from model.user import UserVO
+from model.login import loginTable
+from model.user import Register
 from model.survey import surveyTable
+from model.detector import detectorTable
 # importing the package  
 import language_tool_python  
+
   
 # using the tool  
 my_tool = language_tool_python.LanguageTool('en-US')  
@@ -55,8 +57,8 @@ def corrector(my_text):
 
 #loading trained MLP model. The following function is used to get symptoms as input and predict the result
 mlp = pickle.load(open('finalized_model.sav', 'rb'))
-# vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
-vectorizer = pickle.load(open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
+vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
+# vectorizer = pickle.load(open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
 session = []
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -66,17 +68,17 @@ def login():
         #name = request.form['name']
         uname = request.form['uname']
         password = request.form['psw']
-        login_obj = LoginVO()
-        login_obj.login_username = uname
-        login_obj.login_password = password
-        x = LoginVO.query.filter_by(login_username = login_obj.login_username, login_password = login_obj.login_password )
+        login_obj = loginTable()
+        login_obj.logged_useremail = uname
+        login_obj.logged_password = password
+        x = loginTable.query.filter_by(logged_useremail = login_obj.logged_useremail, logged_password = login_obj.logged_password )
         userLists= [ i.as_dict() for i in x]
         
         print(userLists)
         if userLists:
             response = make_response(redirect(url_for('home')))
-            response.set_cookie('login_secretkey',value=userLists[0].get('login_secretkey'))
-            session.append(userLists[0].get('login_secretkey'))
+            response.set_cookie('logged_secret',value=userLists[0].get('logged_secret'))
+            session.append(userLists[0].get('logged_secret'))
             return response
         else:
             
@@ -85,7 +87,7 @@ def login():
 
 @app.route('/case',methods=['GET','POST'])
 def testCase():
-    if request.cookies.get('login_secretkey') not in session:
+    if request.cookies.get('logged_secret') not in session:
         return redirect('/')    
     if request.method == 'POST':
 
@@ -97,6 +99,10 @@ def testCase():
         feedbacks = request.form.get('feedbacks')
         is_recommendable = "no"
 
+        userDetail = loginTable.query.filter_by(logged_secret = request.cookies.get('logged_secret'))
+        dictDetail = [i.as_dict() for i in userDetail]
+        userEmail = dictDetail[0].get("logged_useremail")
+
         if radio_yes == "1":
             is_recommendable = "yes"
 
@@ -106,16 +112,17 @@ def testCase():
         SurveyData_obj.ratings = ratings
         SurveyData_obj.is_recommendable = is_recommendable
         SurveyData_obj.feedbacks = feedbacks
+        SurveyData_obj.email = userEmail
         db.session.add(SurveyData_obj)
         db.session.commit()
         
 
       # Get the user's information from the form
-        val = LoginVO.query.filter_by(login_secretkey = request.cookies.get('login_secretkey'))
+        val = loginTable.query.filter_by(logged_secret = request.cookies.get('logged_secret'))
         test = [i.as_dict() for i in val]
 
-        if test[0].get("login_username") :
-            send_mail(test[0].get("login_username"))
+        if test[0].get("logged_useremail") :
+            send_mail(test[0].get("logged_useremail"))
     return redirect(url_for('index_home'))
 
 def send_mail(username):
@@ -138,6 +145,8 @@ def send_mail(username):
 
 @app.route('/index_home', methods=['GET', 'POST'])
 def index_home():
+    if request.cookies.get('logged_secret') not in session:
+        return redirect('/')  
     if request.method == 'POST':      #name = request.form['name']
       text = request.form['text']    
       X_test = vectorizer.fit_transform([text]) 
@@ -150,37 +159,55 @@ def index_home():
     
 @app.route('/home',methods=['GET'])
 def home_page():
-    if request.cookies.get('login_secretkey') not in session:
+    if request.cookies.get('logged_secret') not in session:
         return redirect('/')
     return render_template('home.html')
 
 @app.route('/form',methods=['GET'])
-
 def form_page():
-    if request.cookies.get('login_secretkey') not in session:
+    if request.cookies.get('logged_secret') not in session:
         return redirect('/')
     return render_template('form.html')
 
 @app.route('/submit_form', methods=['POST'])
 def submit_form():
     # process the form data here
+    if request.cookies.get('logged_secret') not in session:
+        return redirect('/')  
     text = request.form['text']
     X_test = vectorizer.fit_transform([text]) 
     answer = mlp.predict(X_test)
     prediction = answer[0]
     prob = mlp.predict_proba(X_test)[0][1]*100
+
+    userDetail = loginTable.query.filter_by(logged_secret = request.cookies.get('logged_secret'))
+    dictDetail = [i.as_dict() for i in userDetail]
+    userEmail = dictDetail[0].get("logged_useremail")
+
     if prediction == 1.0:
         result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "% which is high."
+        detector_obj = detectorTable()
+        detector_obj.input = text
+        detector_obj.value = str('{:.2f}'.format(prob)) 
+        detector_obj.user_email = userEmail
+        db.session.add(detector_obj)
+        db.session.commit()
         return render_template('index.html', test=result)
     if prediction == 0.0:
         result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "% which is low."
+        detector_obj = detectorTable()
+        detector_obj.input = text
+        detector_obj.value = str('{:.2f}'.format(prob)) 
+        detector_obj.user_email = userEmail
+        db.session.add(detector_obj)
+        db.session.commit()
         return render_template('index.html', test=result)
     
 @app.route('/logoff',methods=['get'])
 def logOff():
-    login_secretkey = request.cookies.get('login_secretkey')
+    logged_secret = request.cookies.get('logged_secret')
     response = make_response(redirect('/'))
-    response.set_cookie('login_secretkey', "", max_age=0)
+    response.set_cookie('logged_secret', "", max_age=0)
     session.clear()
     return response
 
@@ -194,20 +221,20 @@ def register():
       contact = request.form.get('contact')
       password = request.form.get('psw')
 
-      LoginVO_obj = LoginVO()
-      LoginVO_obj.login_username = email
-      LoginVO_obj.login_password = password
-      LoginVO_obj.login_secretkey = "".join((random.choice(string.ascii_letters+string.digits)) for x in range(10))
-      db.session.add(LoginVO_obj)
+      login_data = loginTable()
+      login_data.logged_useremail = email
+      login_data.logged_password = password
+      login_data.logged_secret = "".join((random.choice(string.ascii_letters+string.digits)) for x in range(10))
+      db.session.add(login_data)
       db.session.commit()
 
-      UserVO_obj = UserVO()
-      UserVO_obj.user_firstname = fname
-      UserVO_obj.user_lastname = lname
-      UserVO_obj.user_email_id = email
-      UserVO_obj.user_contact = contact
-      UserVO_obj.user_login_id = LoginVO_obj.login_id
-      db.session.add(UserVO_obj)
+      user_data = Register()
+      user_data.first_name = fname
+      user_data.last_name = lname
+      user_data.email_id = email
+      user_data.contact = contact
+      user_data.user_logged_id = login_data.logged_id
+      db.session.add(user_data)
       db.session.commit()
 
       # Redirect to the index page
@@ -219,6 +246,8 @@ def register():
 from textblob import TextBlob
 @app.route('/spellcheck', methods=['POST', 'GET'])
 def spellcheck():
+    if request.cookies.get('logged_secret') not in session:
+        return redirect('/')  
     if request.method == 'POST':
         text = request.form['text']
         #sentence = TextBlob(text)
