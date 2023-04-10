@@ -48,35 +48,44 @@ ul{
 }
 .header>ul>li:nth-of-type(1):hover,
 .header>ul>li:nth-of-type(2):hover,
-.header>ul>li:nth-of-type(4):hover{
+.header>ul>li:nth-of-type(4):hover,
+.header>ul>li:nth-of-type(5):hover
+{
     background: black;
     transition: .7s;
 }
 .header>ul>li:nth-of-type(1):hover>a,
 .header>ul>li:nth-of-type(2):hover>a,
-.header>ul>li:nth-of-type(4):hover>a{
+.header>ul>li:nth-of-type(4):hover>a,
+.header>ul>li:nth-of-type(5):hover>a
+{
     color: white;
     transition: .7s;
 }
-.header>ul>li:nth-last-of-type(3) h2{
-    width: 40%;
+.header>ul>li:nth-last-of-type(3) h3{
+    width: 30%;
     float: left;
-    color: rgb(44, 44, 44);
+    color: #4070f4;
     font-family: 'Inconsolata', monospace;
 }
-.header>ul>li:nth-last-of-type(3) h2:nth-of-type(2){
+.header>ul>li:nth-last-of-type(3) h3:nth-of-type(2){
     width: 10%;
     float: left;
-    color: rgb(44, 44, 44);
+    color: #4070f4;
     font-family: 'Inconsolata', monospace;
     margin-left: 5%;
 }
-.header>ul>li:nth-last-of-type(3) h2:nth-of-type(3){
+.header>ul>li:nth-last-of-type(3) h3:nth-of-type(3){
     width: 10%;
     float: left;
-    color: rgb(44, 44, 44);
+    color: #4070f4;
     font-family: 'Inconsolata', monospace;
-    margin-left: 15%;
+    margin-left: 10%;
+}
+
+.header>ul>li:nth-last-of-type(3):hover{
+    cursor: default;
+    background: whitesmoke;
 }
 
 .wrapper{
@@ -213,7 +222,7 @@ form .text h3 a:hover{
     <ul class="nav-link">
       <li><a href="/home">Home Page</a></li>
        <li><a href="/index_home">AI Text Detector</a></li>
-      <li><span><h2>WEB</h2><h2><i class="fa fa-code" aria-hidden="true"></i></h2><h2>APP</h2></span></li>
+      <li><span><h3>GPT</h3><h3><i class="fa fa-code" aria-hidden="true"></i></h3><h3>CHECK</h3></span></li>
       <li><a href="/spellcheck">Spell Check</a></li>
       <li><a href="/logoff">Logout</a></li>
     </ul>
