@@ -57,8 +57,8 @@ def corrector(my_text):
 
 #loading trained MLP model. The following function is used to get symptoms as input and predict the result
 mlp = pickle.load(open('finalized_model.sav', 'rb'))
-vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
-# vectorizer = pickle.load(open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
+# vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
+vectorizer = pickle.load(open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
 session = []
 @app.route('/', methods=['GET', 'POST'])
 def login():
