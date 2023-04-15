@@ -184,13 +184,12 @@ def submit_form():
     prediction = answer[0]
     prob = mlp.predict_proba(X_test)[0][1]*100
     
-
     userDetail = loginTable.query.filter_by(logged_secret = request.cookies.get('logged_secret'))
     dictDetail = [i.as_dict() for i in userDetail]
     userEmail = dictDetail[0].get("logged_useremail")
 
     if prediction == 1.0:
-        result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%."
+        result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%"
         detector_obj = detectorTable()
         detector_obj.input = text
         detector_obj.value = str('{:.2f}'.format(prob)) 
@@ -199,7 +198,7 @@ def submit_form():
         db.session.commit()
         return render_template('index.html', test=result)
     if prediction == 0.0:
-        result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%."
+        result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%"
         detector_obj = detectorTable()
         detector_obj.input = text
         detector_obj.value = str('{:.2f}'.format(prob)) 
