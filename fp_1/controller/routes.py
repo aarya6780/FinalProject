@@ -1,4 +1,4 @@
-
+# importing the package  
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
@@ -11,11 +11,12 @@ import pickle
 from app import db
 import random 
 import string
+# importing the models for database
 from model.login import loginTable
 from model.user import Register
 from model.survey import surveyTable
 from model.detector import detectorTable
-# importing the package  
+
 import language_tool_python  
 
   
@@ -23,10 +24,8 @@ import language_tool_python
 my_tool = language_tool_python.LanguageTool('en-US')  
    
 def corrector(my_text):   
-# getting the matches  
-    my_matches = my_tool.check(my_text)  
-  
-# defining some variables  
+ 
+    my_matches = my_tool.check(my_text)    
     myMistakes = []  
     myCorrections = []  
     startPositions = []  
@@ -40,7 +39,6 @@ def corrector(my_text):
             myMistakes.append(my_text[rules.offset : rules.errorLength + rules.offset])  
             myCorrections.append(rules.replacements[0])  
   
-    # creating new object  
     my_NewText = list(my_text)   
   
     # rewriting the correct passage  
@@ -53,13 +51,13 @@ def corrector(my_text):
 
 
 
-
-
-#loading trained MLP model. The following function is used to get symptoms as input and predict the result
+#loading trained MLP model.
 mlp = pickle.load(open('finalized_model.sav', 'rb'))
 # vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
-vectorizer = pickle.load(open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
+vectorizer = pickle.load(   open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
 session = []
+
+# Login route
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method =='GET':
@@ -85,6 +83,7 @@ def login():
             return redirect('/')
         
 
+# Survey Form
 @app.route('/case',methods=['GET','POST'])
 def testCase():
     if request.cookies.get('logged_secret') not in session:
@@ -125,6 +124,7 @@ def testCase():
             send_mail(test[0].get("logged_useremail"))
     return redirect(url_for('index_home'))
 
+#function to send mail
 def send_mail(username):
     sender = "doshiaarya007@gmail.com"
     password = "gbfctpxwdwhhfqfc"
@@ -142,7 +142,7 @@ def send_mail(username):
     server.sendmail(sender, receiver, text)
     server.quit()
 
-
+#AI detector route
 @app.route('/index_home', methods=['GET', 'POST'])
 def index_home():
     if request.cookies.get('logged_secret') not in session:
@@ -157,18 +157,22 @@ def index_home():
          # Render the index page with the login form
     return render_template('index.html')
     
+
+#Home page    
 @app.route('/home',methods=['GET'])
 def home_page():
     if request.cookies.get('logged_secret') not in session:
         return redirect('/')
     return render_template('home.html')
 
+#UI of Survey Form
 @app.route('/form',methods=['GET'])
 def form_page():
     if request.cookies.get('logged_secret') not in session:
         return redirect('/')
     return render_template('form.html')
 
+#AI Detector Submit 
 @app.route('/submit_form', methods=['POST'])
 def submit_form():
     # process the form data here
@@ -179,6 +183,7 @@ def submit_form():
     answer = mlp.predict(X_test)
     prediction = answer[0]
     prob = mlp.predict_proba(X_test)[0][1]*100
+    
 
     userDetail = loginTable.query.filter_by(logged_secret = request.cookies.get('logged_secret'))
     dictDetail = [i.as_dict() for i in userDetail]
@@ -203,6 +208,8 @@ def submit_form():
         db.session.commit()
         return render_template('index.html', test=result)
     
+
+#Logout Route    
 @app.route('/logoff',methods=['get'])
 def logOff():
     logged_secret = request.cookies.get('logged_secret')
@@ -211,6 +218,7 @@ def logOff():
     session.clear()
     return response
 
+#Regsiter User
 @app.route('/registeruser',methods=['GET','POST'])
 def register():
     if request.method == 'POST':
@@ -244,6 +252,8 @@ def register():
 
     
 from textblob import TextBlob
+
+#Spell Check 
 @app.route('/spellcheck', methods=['POST', 'GET'])
 def spellcheck():
     if request.cookies.get('logged_secret') not in session:
