@@ -5,7 +5,7 @@ We have created an app called GPT ZERO
 Steps to run app on EC2:
 
 1. Create an instance 
-2. Clone the repository from : ""
+2. Clone the repository from : "https://github.com/aarya6780/FinalProject.git"
 3. Install all the required packages 
 4. Run it by : "python3.7 final.py"
 
