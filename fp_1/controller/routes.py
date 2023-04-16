@@ -178,8 +178,10 @@ def submit_form():
     # process the form data here
     if request.cookies.get('logged_secret') not in session:
         return redirect('/')  
-    text = request.form['text']
-    X_test = vectorizer.fit_transform([text]) 
+    validate = request.form['text']
+    if not validate:
+        return redirect('/index_home')
+    X_test = vectorizer.fit_transform([validate]) 
     answer = mlp.predict(X_test)
     prediction = answer[0]
     prob = mlp.predict_proba(X_test)[0][1]*100
