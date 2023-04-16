@@ -52,7 +52,7 @@ def corrector(my_text):
 
 
 #loading trained MLP model.
-mlp = pickle.load(open('finalized_model.sav', 'rb'))
+mlp = pickle.load(open('/opt/FinalProject/fp_1/finalized_model.sav', 'rb'))
 # vectorizer = pickle.load(open('/Users/aaryadoshi/Documents/fp_1/vectorizer.pickle','rb'))
 vectorizer = pickle.load(   open('/opt/FinalProject/fp_1/vectorizer.pickle','rb'))
 session = []
