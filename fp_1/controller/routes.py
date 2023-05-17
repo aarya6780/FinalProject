@@ -149,7 +149,7 @@ def index_home():
         return redirect('/')  
     if request.method == 'POST':      #name = request.form['name']
       text = request.form['text']    
-      X_test = vectorizer.fit_transform([text]) 
+      X_test = vectorizer.transform([text]) 
       y_pred = mlp.predict(X_test)     
       text = request.form['text']
       if text:         
@@ -191,7 +191,7 @@ def submit_form():
     userEmail = dictDetail[0].get("logged_useremail")
 
     if prediction == 1.0:
-        result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%"
+        result = "The text might be written by AI as the probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%"
         detector_obj = detectorTable()
         detector_obj.input = text
         detector_obj.value = str('{:.2f}'.format(prob)) 
@@ -200,7 +200,7 @@ def submit_form():
         db.session.commit()
         return render_template('index.html', test=result)
     if prediction == 0.0:
-        result = "The probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%"
+        result = "The text might not be written by AI as the probability for the given text to be written by AI is " + str('{:.2f}'.format(prob)) + "%"
         detector_obj = detectorTable()
         detector_obj.input = text
         detector_obj.value = str('{:.2f}'.format(prob)) 
